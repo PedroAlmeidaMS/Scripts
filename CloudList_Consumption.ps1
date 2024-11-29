@@ -15,7 +15,7 @@ $nonSecureLADictionary = New-Object "System.Collections.Generic.Dictionary``2[Sy
 $boolCheck = $false
 
 
-#Check logic apps to find Secure Actions
+#Check logic apps to find orphaned connectors
 Write-Host ''
 Write-Host 'Looking up Consumption Logic Apps'
 
@@ -31,13 +31,13 @@ $resources | ForEach-Object {
     $logicAppJson = az rest --method get --uri $logicAppUrl
     $logicAppJsonText = $logicAppJson | ConvertFrom-Json
     #Check Logic App Actions inside the Logic App JSON
+    #Iterate through the connectors
     Write-Host 'Logic App ' $logicAppName ''
 
     Write-Host 'Checking Logic App if is using Secure Inputs'
     #Check Logic App Actions inside the Logic App JSON
     $logicAppActions = $logicAppJsonText.properties.definition.actions
 
-    #Iterate through the actions
     $logicAppActions.psobject.properties | ForEach-Object{
         Write-Host 'Logic App Action name: ' $_.Name
         if($_.Value.runtimeConfiguration.secureData -ne $null)
@@ -52,8 +52,7 @@ $resources | ForEach-Object {
    {
         #Add to Secure List        
                 $resourceIdLower = $logicApp.id.ToLower()
-        ##Add members to the dictionary
-        $la | Add-Member -MemberType NoteProperty -Name 'IsUsed' -Value 'FALSE'        
+        ##Add members to the dictionary     
         $la | Add-Member -MemberType NoteProperty -Name 'Name' -Value $logicApp.Name
         $la | Add-Member -MemberType NoteProperty -Name 'Id' -Value $logicApp.Id
         $secureLADictionary.Add($resourceIdLower, $la)
@@ -63,8 +62,7 @@ $resources | ForEach-Object {
    {
         #Add to Non-secure list
         $resourceIdLower = $logicApp.id.ToLower()
-        ##Add members to the dictionary
-        $la | Add-Member -MemberType NoteProperty -Name 'IsUsed' -Value 'FALSE'        
+        ##Add members to the dictionary    
         $la | Add-Member -MemberType NoteProperty -Name 'Name' -Value $logicApp.Name
         $la | Add-Member -MemberType NoteProperty -Name 'Id' -Value $logicApp.Id
         $nonSecureLADictionary.Add($resourceIdLower, $azureConnector)
@@ -80,7 +78,7 @@ Write-Host 'Secure Logic Apps'
 $secureLADictionary.Values | ForEach-Object{
     Write-Host $_.name 
 }
-Write-Host 'Non-Secure Logic Apps'
+Write-Host 'Non Secure Logic Apps'
 $nonSecureLADictionary.Values | ForEach-Object{
     Write-Host $_.name 
 }
